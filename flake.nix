@@ -13,7 +13,7 @@
           default = pkgs.rustPlatform.buildRustPackage {
             pname = "vault-unseal";
             version = "0.1.0";
-            src = ./.;
+            src = self;
             cargoSha256 = "sha256-nCOHQU62fzJ9uwUK8n5JsVkKmqQwhG/5GI6rvtejZjY=";
           };
         };
