@@ -17,28 +17,30 @@ struct KeyFile {
 }
 
 #[derive(Debug, Deserialize)]
-struct HealthCheck {
+struct UnsealResponse {
     sealed: bool,
+    t: u8,
+    n: u8,
+    progress: u8,
 }
 
+/// returns true if the vault is sealed
+///
+/// see: https://developer.hashicorp.com/vault/api-docs/system/health
 fn is_sealed(health_url: &str) -> bool {
-    fn parse_hc(x: Response) -> bool {
-        match x.into_json() {
-            Ok(HealthCheck { sealed }) => sealed,
-            Err(_) => false,
-        }
-    }
-
     let resp = ureq::get(health_url).call();
     match resp {
-        Ok(x) => parse_hc(x),
-        Err(Status(503, resp)) => parse_hc(resp),
-        Err(Status(429, _)) => {
-            info!("got code 429: too many requests, waiting");
-            // too many requests
-            thread::sleep(Duration::from_secs(15));
+        Ok(r) if r.status() == 200 => false,
+        Ok(r) => {
+            warn!(
+                "unexpected status code: '{}': {}",
+                r.status(),
+                r.status_text()
+            );
             false
         }
+        Err(Status(429, _)) => false, // Unsealed and standby
+        Err(Status(503, _)) => true,  // Sealed
         Err(Status(code, resp)) => {
             info!(
                 "error checking health, got code: '{code}', with message: {}",
@@ -47,22 +49,28 @@ fn is_sealed(health_url: &str) -> bool {
             false
         }
         Err(e) => {
-            warn!("Got error: {e}");
+            warn!("error checking health: {e}");
             false
         }
     }
 }
 
 fn unseal(keyfile: &KeyFile, unseal_url: &str) {
-    let len = keyfile.keys.len();
-    for (i, key) in keyfile.keys.iter().enumerate() {
-        let i = i + 1;
+    for key in keyfile.keys.iter().enumerate() {
         match ureq::post(unseal_url).send_json(json!({ "key": key })) {
             Ok(resp) if resp.status() == 200 => {
-                if i < len {
-                    info!("unsealed vault partially {i}/{len}");
-                } else {
-                    info!("fully unsealed vault {i}/{len}");
+                if let Ok(UnsealResponse {
+                    sealed,
+                    t,
+                    progress,
+                    ..
+                }) = resp.into_json()
+                {
+                    if !sealed {
+                        info!("vault unsealed");
+                        return;
+                    }
+                    info!("unsealed vault partially {progress}/{t}");
                 }
             }
             Ok(resp) => warn!(
