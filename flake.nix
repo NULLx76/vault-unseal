@@ -10,12 +10,15 @@
       let pkgs = nixpkgs.legacyPackages.${system};
       in {
         packages = {
-          default = pkgs.rustPlatform.buildRustPackage {
-            pname = "vault-unseal";
-            version = "0.1.0";
-            src = self;
-            cargoSha256 = "sha256-nCOHQU62fzJ9uwUK8n5JsVkKmqQwhG/5GI6rvtejZjY=";
-          };
+          default =
+            let toml = (builtins.fromTOML (builtins.readFile ./Cargo.toml));
+            in pkgs.rustPlatform.buildRustPackage {
+              pname = toml.package.name;
+              version = toml.package.version;
+              src = self;
+              cargoSha256 =
+                "sha256-eOvTR7TpFpi83J3G8HPXgOBryTzkq4XWp6CER6UDCbo=";
+            };
         };
       });
 }
