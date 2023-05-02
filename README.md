@@ -1,4 +1,4 @@
-# Vault Unsealer
+# Vault Unsealer [![ci status badege](https://ci.0x76.dev/api/badges/v/vault-unseal/status.svg)](https://ci.0x76.dev/v/vault-unseal)
 | :exclamation: this method of unsealing the vault is not recommended if you have high security requirements!  |
 |-----------------------------------------|
 
