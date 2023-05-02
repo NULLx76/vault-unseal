@@ -16,8 +16,7 @@
               pname = toml.package.name;
               version = toml.package.version;
               src = self;
-              cargoSha256 =
-                "sha256-eOvTR7TpFpi83J3G8HPXgOBryTzkq4XWp6CER6UDCbo=";
+              cargoLock.lockFile = ./Cargo.lock;
             };
         };
       });
