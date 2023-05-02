@@ -1,0 +1,7 @@
+pipeline:
+  build:
+    image: nixos/nix:2.15.0
+    environment:
+      - NIX_CONFIG=experimental-features = nix-command flakes
+    commands:
+      - nix build
