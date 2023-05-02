@@ -54,6 +54,9 @@ fn is_sealed(health_url: &str) -> bool {
     }
 }
 
+/// Unseals a vault given keys and url
+/// 
+/// See: https://developer.hashicorp.com/vault/api-docs/system/unseal
 fn unseal(keyfile: &KeyFile, unseal_url: &str) {
     for key in keyfile.keys.iter() {
         match ureq::post(unseal_url).send_json(json!({ "key": key })) {
