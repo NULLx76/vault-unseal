@@ -9,7 +9,6 @@ use std::{env, fs::File};
 use tracing::{info, subscriber, warn};
 use tracing_subscriber::FmtSubscriber;
 use ureq::Error::Status;
-use ureq::Response;
 
 #[derive(Debug, Deserialize)]
 struct KeyFile {
@@ -56,7 +55,7 @@ fn is_sealed(health_url: &str) -> bool {
 }
 
 fn unseal(keyfile: &KeyFile, unseal_url: &str) {
-    for key in keyfile.keys.iter().enumerate() {
+    for key in keyfile.keys.iter() {
         match ureq::post(unseal_url).send_json(json!({ "key": key })) {
             Ok(resp) if resp.status() == 200 => {
                 if let Ok(UnsealResponse {
@@ -73,7 +72,7 @@ fn unseal(keyfile: &KeyFile, unseal_url: &str) {
                     info!("unsealed vault partially {progress}/{t}");
                 }
             }
-            Ok(resp) => warn!(
+            Ok(resp) | Err(Status(_, resp)) => warn!(
                 "error unsealing vault, got code '{}', with message: {}",
                 resp.status(),
                 resp.status_text()
